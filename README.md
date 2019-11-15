@@ -16,7 +16,7 @@ npm install -S afeiship/react-filter
   ```
 2. import js
   ```js
-  import ReactPipe from '../src/main';
+  import ReactFilter from '../src/main';
   import ReactDOM from 'react-dom';
   import React from 'react';
   import './assets/style.scss';
@@ -30,20 +30,19 @@ npm install -S afeiship/react-filter
     render() {
       return (
         <div className="app-container">
-          <ReactPipe items={[
+          <ReactFilter items={[
             addZero(),
             toString(),
             addMore('abc', 'def')
           ]}>
             HelloPipe!
-          </ReactPipe>
+          </ReactFilter>
         </div>
       );
     }
   }
 
   ReactDOM.render(<App />, document.getElementById('app'));
-
   ```
 
 ## documentation

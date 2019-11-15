@@ -1,4 +1,4 @@
-import ReactPipe from '../src/main';
+import ReactFilter from '../src/main';
 import ReactDOM from 'react-dom';
 import React from 'react';
 import './assets/style.scss';
@@ -12,13 +12,13 @@ class App extends React.Component {
   render() {
     return (
       <div className="app-container">
-        <ReactPipe items={[
+        <ReactFilter items={[
           addZero(),
           toString(),
           addMore('abc', 'def')
         ]}>
           HelloPipe!
-        </ReactPipe>
+        </ReactFilter>
       </div>
     );
   }

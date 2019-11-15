@@ -12,7 +12,11 @@ class App extends React.Component {
   render() {
     return (
       <div className="app-container">
-        <ReactPipe items={[addZero(), toString(), addMore('abc', 'def')]}>
+        <ReactPipe items={[
+          addZero(),
+          toString(),
+          addMore('abc', 'def')
+        ]}>
           HelloPipe!
         </ReactPipe>
       </div>

@@ -1,5 +1,5 @@
-export default (inValue, inArgs) => {
-  return inArgs.reduce((arg1, arg2) => {
-    return arg1 + arg2 + '';
-  }, '======' + inValue);
+export default (a, b) => {
+  return (inValue) => {
+    return a + inValue + b;
+  };
 };

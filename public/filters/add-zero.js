@@ -1,3 +1,5 @@
-export default (inValue) => {
-  return '-----0' + inValue + '0';
+export default () => {
+  return (inValue) => {
+    return '-----0' + inValue + '0';
+  };
 };

@@ -1,3 +1,5 @@
-export default (inValue) => {
-  return 'sssssss' + inValue + 'TO_STRING';
+export default () => {
+  return (inValue) => {
+    return 'sssssss' + inValue + 'TO_STRING';
+  };
 };

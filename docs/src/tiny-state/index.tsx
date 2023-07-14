@@ -15,9 +15,21 @@ export const StateProvider = ({ reducer, initialState, children }) => {
 
   nx.$set = (inKey, inValue) => {
     const state = value[0];
+    const idx = inKey.indexOf('.');
+    const [module, path] = nx.slice2str(inKey, idx + 1);
+    const oldValue = nx.get(state, inKey);
     const newState = nx.set(state, inKey, inValue);
-    const dispatch = value[1] satisfies Dispatch<any>;
+    const dispatch = value[1] as any;
     dispatch({ type: '__set__', newTheme: newState });
+    const newValue = nx.get(state, inKey);
+    const watchers = nx.get(state, [module, 'watch'].join('.'));
+    nx.forIn(watchers, (key, watcher) => {
+      console.log(key, path);
+      if (key === path) {
+        watcher(newValue, oldValue);
+      }
+    });
+    // console.log('change: ', inKey, newValue, oldValue);
   };
 
   nx.$call = (inKey, ...args) => {

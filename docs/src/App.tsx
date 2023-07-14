@@ -1,4 +1,5 @@
 import '@jswork/next';
+import '@jswork/next-slice2str';;
 import { StateProvider } from './tiny-state';
 import Comp1 from './comp1';
 
@@ -37,7 +38,7 @@ const productReducer = (state: any, action: any) => {
 };
 
 const mainReducer = (state: any, action: any) => {
-  console.log('state/action:', state, action);
+  // console.log('state/action:', state, action);
   const { type, ...payload } = action;
   switch (action.type) {
     case '__set__':
@@ -60,14 +61,29 @@ const mainReducer = (state: any, action: any) => {
 
 export default function App() {
   const initialState = {
-    theme: { primary: 'green' },
+    theme: {
+      primary: 'green',
+      child: {
+        n1: {
+          a: 123,
+        },
+      },
+      watch: {
+        primary: (newValue: any, oldValue: any) => {
+          console.log('them primary chagne: ', newValue, oldValue);
+        },
+        'child.n1'(newValue: any, oldValue: any) {
+          console.log('when a change', newValue, oldValue);
+        },
+      },
+    },
     user: {
       name: 'afeiship',
       actions: {
-        sayHi(){
+        sayHi() {
           console.log('hello user');
-        }
-      }
+        },
+      },
     },
     product: {
       name: 'next',

@@ -6,6 +6,9 @@ import Comp1 from './comp1';
 export default function App(props) {
   const initialState = {
     theme: { primary: 'green' },
+    hello: (name) => {
+      console.log(`hello ${name}`);
+    },
   };
 
   const reducer = (state, action) => {
@@ -17,7 +20,9 @@ export default function App(props) {
           ...state,
           ...payload,
         };
-
+      case '__call__':
+        console.log(action);
+        break;
       default:
         return state;
     }

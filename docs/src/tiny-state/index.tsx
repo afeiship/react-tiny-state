@@ -20,6 +20,11 @@ export const StateProvider = ({ reducer, initialState, children }) => {
     const dispatch = value[1] satisfies Dispatch<any>;
     dispatch({ type: '__set__', newTheme: newState });
   };
+  nx.$call = (inKey, ...args) => {
+    const state = value[0];
+    const fn = nx.get(state, inKey);
+    fn && fn(...args);
+  }
   // nx.$set = (inKey, inValue) =xx;
   // nx.$call = xxx;
   return <StateContext.Provider value={value}>{children}</StateContext.Provider>;

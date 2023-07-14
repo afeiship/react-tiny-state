@@ -37,7 +37,7 @@ export const StateProvider = ({ reducer, initialState, children }) => {
     const [module, method] = inKey.split('.');
     const path = [module, 'actions', method].join('.');
     const fn = nx.get(state, path);
-    fn && fn(...args);
+    return fn && fn(...args);
   };
   // nx.$set = (inKey, inValue) =xx;
   // nx.$call = xxx;

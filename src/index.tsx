@@ -12,9 +12,8 @@ const StateProvider = ({ reducer, initialState, children }) => {
   const value = useReducer(reducer, initialState);
   const [rootState, dispatch] = value;
 
-  nx.$root = rootState;
-  nx.$get = (inPath, inDefaultValue) => nx.get(rootState, inPath, inDefaultValue);
-  nx.$set = (inPath, inValue) => dispatch({ type: '__set__', path: inPath, value: inValue });
+  // nx.$get = (inPath, inDefaultValue) => nx.get(rootState, inPath, inDefaultValue);
+  // nx.$set = (inPath, inValue) => dispatch({ type: '__set__', path: inPath, value: inValue });
 
   // nx.$root = value[0];
   // nx.$get = (inKey) = xx;

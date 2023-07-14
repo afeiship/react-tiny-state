@@ -20,6 +20,7 @@
     "@jswork/next": "^1.1.5",
     "@types/jest": "^29.5.0",
     "@types/node": "^18.15.5",
+    "@types/react": "^18.2.15",
     "babel-jest": "^29.5.0",
     "del": "^6.0.0",
     "esbuild": "^0.17.12",
@@ -31,6 +32,7 @@
     "gulp-rename": "^2.0.0",
     "gulp-typescript": "^6.0.0-alpha.1",
     "jest": "^29.5.0",
+    "react": "^18.2.0",
     "typescript": "^4.9.5"
   },
   "publishConfig": {

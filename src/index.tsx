@@ -3,19 +3,21 @@
 // https://playcode.io/1533196
 // https://react.dev/reference/react/useReducer
 
-import React, { createContext, useReducer } from 'react';
+import React, { createContext, useReducer, useContext } from 'react';
 import nx from '@jswork/next';
 
 declare var wx: any;
 
-const StateContext = createContext(null);
+type ContextType = ReturnType<typeof useReducer>;
+
+const StateContext = createContext<ContextType>({} as ContextType);
 
 const StateProvider = ({ reducer, initialState, children }) => {
   const value = useReducer(reducer, initialState);
   const [rootState, dispatch] = value;
 
-  // nx.$get = (inPath, inDefaultValue) => nx.get(rootState, inPath, inDefaultValue);
-  // nx.$set = (inPath, inValue) => dispatch({ type: '__set__', path: inPath, value: inValue });
+  nx.$get = (inPath, inDefaultValue) => nx.get(rootState, inPath, inDefaultValue);
+  nx.$set = (inPath, inValue) => dispatch({ type: '__set__', path: inPath, value: inValue });
 
   // nx.$root = value[0];
   // nx.$get = (inKey) = xx;

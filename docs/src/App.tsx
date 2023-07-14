@@ -2,6 +2,8 @@ import '@jswork/next';
 import { StateProvider } from './tiny-state';
 import Comp1 from './comp1';
 
+// getters: https://www.cnblogs.com/polk6/p/13079949.html
+
 const userReducer = (state: any, action: any) => {
   switch (action.type) {
     case 'set':
@@ -61,6 +63,11 @@ export default function App() {
     theme: { primary: 'green' },
     user: {
       name: 'afeiship',
+      actions: {
+        sayHi(){
+          console.log('hello user');
+        }
+      }
     },
     product: {
       name: 'next',

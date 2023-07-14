@@ -8,7 +8,6 @@ export const StateContext = createContext(null);
 export const StateProvider = ({ reducer, initialState, children }) => {
   const value = useReducer(reducer, initialState);
 
-  nx.$root = value[0];
   nx.$get = (inKey, inDefault) => {
     const state = value[0];
     return nx.get(state, inKey, inDefault);
@@ -20,11 +19,14 @@ export const StateProvider = ({ reducer, initialState, children }) => {
     const dispatch = value[1] satisfies Dispatch<any>;
     dispatch({ type: '__set__', newTheme: newState });
   };
+
   nx.$call = (inKey, ...args) => {
     const state = value[0];
-    const fn = nx.get(state, inKey);
+    const [module, method] = inKey.split('.');
+    const path = [module, 'actions', method].join('.');
+    const fn = nx.get(state, path);
     fn && fn(...args);
-  }
+  };
   // nx.$set = (inKey, inValue) =xx;
   // nx.$call = xxx;
   return <StateContext.Provider value={value}>{children}</StateContext.Provider>;

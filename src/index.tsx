@@ -6,6 +6,8 @@
 import React, { createContext, useReducer } from 'react';
 import nx from '@jswork/next';
 
+declare var wx: any;
+
 const StateContext = createContext(null);
 
 const StateProvider = ({ reducer, initialState, children }) => {

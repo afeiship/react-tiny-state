@@ -6,6 +6,7 @@
   "module": "dist/index.esm.js",
   "typings": "dist/index.d.ts",
   "scripts": {
+    "dev": "cd docs && yarn dev",
     "build": "gulp",
     "test": "jest",
     "release": "release-it"

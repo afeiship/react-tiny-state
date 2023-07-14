@@ -1,10 +1,9 @@
 // https://jestjs.io/docs/en/configuration
 module.exports = {
   verbose: true,
-  testRegex: [/\.spec.js/],
+  testRegex: [/\.spec.ts/],
   //preset: "jest-puppeteer",
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1'
-  },
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.js']
+  }
 };

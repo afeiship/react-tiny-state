@@ -1,49 +1,34 @@
-# react-filter
-> Filters support for react.
+# react-tiny-state
+> Super simple state management for React apps.
 
-## install
+[![version][version-image]][version-url]
+[![license][license-image]][license-url]
+[![size][size-image]][size-url]
+[![download][download-image]][download-url]
+
+## installation
 ```shell
-npm install -S afeiship/react-filter
+npm install @jswork/react-tiny-state
 ```
 
 ## usage
-1. import css
-  ```scss
-  @import "~react-filter/style.scss";
+```js
+import reactTinyState from '@jswork/react-tiny-state';
 
-  // customize your styles:
-  $react-filter-options: ()
-  ```
-2. import js
-  ```js
-  import ReactFilter from '../src/main';
-  import ReactDOM from 'react-dom';
-  import React from 'react';
-  import './assets/style.scss';
+// usage goes here.
+```
 
-  import addMore from './filters/add-more';
-  import toString from './filters/to-string';
-  import addZero from './filters/add-zero';
+## license
+Code released under [the MIT license](https://github.com/afeiship/react-tiny-state/blob/master/LICENSE.txt).
 
-  class App extends React.Component {
-    componentDidMount() {}
-    render() {
-      return (
-        <div className="app-container">
-          <ReactFilter items={[
-            addZero(),
-            toString(),
-            addMore('abc', 'def')
-          ]}>
-            HelloPipe!
-          </ReactFilter>
-        </div>
-      );
-    }
-  }
+[version-image]: https://img.shields.io/npm/v/@jswork/react-tiny-state
+[version-url]: https://npmjs.org/package/@jswork/react-tiny-state
 
-  ReactDOM.render(<App />, document.getElementById('app'));
-  ```
+[license-image]: https://img.shields.io/npm/l/@jswork/react-tiny-state
+[license-url]: https://github.com/afeiship/react-tiny-state/blob/master/LICENSE.txt
 
-## documentation
-- https://afeiship.github.io/react-filter/
+[size-image]: https://img.shields.io/bundlephobia/minzip/@jswork/react-tiny-state
+[size-url]: https://github.com/afeiship/react-tiny-state/blob/master/dist/react-tiny-state.min.js
+
+[download-image]: https://img.shields.io/npm/dm/@jswork/react-tiny-state
+[download-url]: https://www.npmjs.com/package/@jswork/react-tiny-state

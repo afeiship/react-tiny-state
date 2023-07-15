@@ -11,7 +11,6 @@ const reducer = (state, action) => {
   const { type, payload } = action;
   switch (type) {
     case '__set__':
-      // console.log(state, payload);
       return {
         ...state,
         ...payload,

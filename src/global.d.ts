@@ -1,7 +1,6 @@
 interface NxStatic {
-  $root: any;
+  $defineStore: any;
   $get: any;
   $set: any;
-  $define: any;
   $call: any;
 }

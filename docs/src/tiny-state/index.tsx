@@ -1,7 +1,10 @@
 // https://github.com/lukashala/react-simply/blob/master/tools/state/src/index.js
-import React, { Fragment, createContext, useContext, useReducer } from 'react';
+import React, { Fragment, createContext, useContext, useReducer, useEffect, useState } from 'react';
 import type { DispatchWithoutAction } from 'react';
 import PropTypes from 'prop-types';
+import EventMitt from '@jswork/event-mitt';
+
+const eventBus = Object.assign({}, EventMitt);
 
 const reducer = (state, action) => {
   const { type, payload } = action;
@@ -45,9 +48,8 @@ nx.$defineStore = function (inName: string, inDescriptor: any) {
 
         // changed
         this[`@dps.__${key}__`] = inValue;
-        console.log('set!');
         nx.$set([inName, key].join('.'), inValue);
-        console.log('this', this);
+        eventBus.emit('state.change');
       },
       get() {
         return this[`@dps.__${key}__`] || value;
@@ -69,9 +71,19 @@ nx.$defineStore = function (inName: string, inDescriptor: any) {
 export const StateProvider = ({ store, children }) => {
   const initialState = getInitialState(store);
   const value = useReducer(reducer, initialState);
-  const forceUpdate = useForceUpdate();
+  const [ts, setTs] = useState<number>();
 
-  nx.$debug = (inKey: string, inDefault?) => {
+  useEffect(() => {
+    eventBus.one('state.change', () => {
+      // forceUpdate();
+      // console.log('force update?');
+      setTs(Date.now());
+    });
+  }, []);
+
+  // forceUpdate();
+
+  nx.$get = (inKey: string, inDefault?) => {
     const state = value[0];
     return nx.get(state, inKey, inDefault);
   };
@@ -101,13 +113,17 @@ export const StateProvider = ({ store, children }) => {
     const ctx = store[module].state;
     const res = fn && fn.apply(ctx, args);
 
-    forceUpdate();
+    eventBus.emit('state.change');
     // force update
     return res;
   };
   // nx.$set = (inKey, inValue) =xx;
   // nx.$call = xxx;
-  return <StateContext.Provider value={value}>{children}</StateContext.Provider>;
+  return (
+    <StateContext.Provider key={ts} value={value}>
+      {children}
+    </StateContext.Provider>
+  );
 };
 
 StateProvider.propTypes = {
@@ -120,10 +136,4 @@ StateProvider.propTypes = {
    * Object containing initial state value.
    */
   store: PropTypes.any,
-};
-
-nx.$get = (inKey: string, inDefault?: any) => {
-  const value = useContext(StateContext);
-  const state = value[0];
-  return nx.get(state, inKey, inDefault);
 };

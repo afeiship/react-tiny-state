@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@jswork/event-mitt": "^1.0.4",
     "@jswork/next": "^1.1.11",
     "@jswork/next-camelize": "^1.0.2",
     "@jswork/next-slice2str": "^1.0.4",

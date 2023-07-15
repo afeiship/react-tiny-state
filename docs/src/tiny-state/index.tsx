@@ -71,7 +71,7 @@ export const StateProvider = ({ store, children }) => {
   const value = useReducer(reducer, initialState);
   const forceUpdate = useForceUpdate();
 
-  nx.$query = (inKey: string, inDefault?) => {
+  nx.$debug = (inKey: string, inDefault?) => {
     const state = value[0];
     return nx.get(state, inKey, inDefault);
   };

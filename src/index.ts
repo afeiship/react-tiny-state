@@ -65,7 +65,7 @@ nx.$defineStore = function (inName: string, inDescriptor: StoreDescriptor) {
           EVENT_BUS.emit(CHANGE_EVENT);
         },
         get() {
-          return this[propName] || value;
+          return typeof this[propName] === 'undefined' ? value : this[propName];
         },
       });
     }

@@ -58,7 +58,6 @@ nx.$defineStore = function (inName: string, inDescriptor: StoreDescriptor) {
 
           // changed
           this[`${DPS_KEY}.${key}`] = inValue;
-          nx.$set([inName, key].join('.'), inValue);
           EVENT_BUS.emit(CHANGE_EVENT);
         },
         get() {

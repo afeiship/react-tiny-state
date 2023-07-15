@@ -15,6 +15,8 @@ export default (props) => {
       <pre>
         <code>{JSON.stringify(profile, null, 2)}</code>
       </pre>
+
+      <h4>username: {nx.$get('user.profile.login')}</h4>
       <button onClick={handleChangeTheme}>ChangeTheme</button>
     </div>
   );

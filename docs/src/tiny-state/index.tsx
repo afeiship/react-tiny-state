@@ -5,6 +5,7 @@ import PropTypes from 'prop-types';
 import EventMitt from '@jswork/event-mitt';
 
 const eventBus = Object.assign({}, EventMitt);
+const DPS_KEY = '__@dps@__';
 
 const reducer = (state, action) => {
   const { type, payload } = action;
@@ -21,7 +22,7 @@ const reducer = (state, action) => {
 };
 
 const getInitialState = (store) => {
-  const state = { '@dps@': {} };
+  const state = { [DPS_KEY]: {} };
   nx.forIn(store, (key, value) => {
     const storeKey = nx.camelize(value.name || key);
     const storeState = nx.get(value, 'state');
@@ -41,20 +42,22 @@ nx.$defineStore = function (inName: string, inDescriptor: any) {
   const { state, getters } = inDescriptor;
 
   nx.forIn(state, (key, value) => {
-    Object.defineProperty(state, key, {
-      set(inValue) {
-        // not change:
-        if (this[key] === inValue) return;
+    if (key !== DPS_KEY) {
+      Object.defineProperty(state, key, {
+        set(inValue) {
+          // not change:
+          if (this[key] === inValue) return;
 
-        // changed
-        this[`@dps.__${key}__`] = inValue;
-        nx.$set([inName, key].join('.'), inValue);
-        eventBus.emit('state.change');
-      },
-      get() {
-        return this[`@dps.__${key}__`] || value;
-      },
-    });
+          // changed
+          this[`${DPS_KEY}.${key}`] = inValue;
+          nx.$set([inName, key].join('.'), inValue);
+          eventBus.emit('state.change');
+        },
+        get() {
+          return this[`${DPS_KEY}.${key}`] || value;
+        },
+      });
+    }
   });
 
   nx.forIn(getters, (key, value) => {
@@ -74,11 +77,7 @@ export const StateProvider = ({ store, children }) => {
   const [ts, setTs] = useState<number>();
 
   useEffect(() => {
-    eventBus.one('state.change', () => {
-      // forceUpdate();
-      // console.log('force update?');
-      setTs(Date.now());
-    });
+    eventBus.one('state.change', () => setTs(Date.now()));
   }, []);
 
   // forceUpdate();
@@ -111,11 +110,13 @@ export const StateProvider = ({ store, children }) => {
     const path = [module, 'actions', method].join('.');
     const fn = nx.get(store, path);
     const ctx = store[module].state;
-    const res = fn && fn.apply(ctx, args);
+    // const res = fn && fn.apply(ctx, args);
 
     eventBus.emit('state.change');
+    console.log(ctx, path);
+
     // force update
-    return res;
+    return nx.invoke(ctx, fn, args);
   };
   // nx.$set = (inKey, inValue) =xx;
   // nx.$call = xxx;

@@ -106,8 +106,6 @@ const StateProvider = ({ store, children }: StateProviderProps) => {
     return () => res.destroy();
   }, []);
 
-  // forceUpdate();
-
   nx.$get = (inKey: string, inDefault?) => {
     const state = value[0];
     return nx.get(state, inKey, inDefault);

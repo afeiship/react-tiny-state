@@ -3,10 +3,36 @@ import React, { createContext, useContext, useReducer } from 'react';
 import type { Dispatch } from 'react';
 import PropTypes from 'prop-types';
 
-export const StateContext = createContext(null);
+const reducer = (state, action) => {
+  const { type, ...payload } = action;
+  switch (action.type) {
+    case '__set__':
+      return {
+        ...state,
+        ...payload,
+      };
+    default:
+      return state;
+  }
+};
 
-export const StateProvider = ({ reducer, initialState, children }) => {
+const getInitialState = (store) => {
+  const state = {};
+  nx.forIn(store, (key, value) => {
+    const storeKey = nx.camelize(value.name || key);
+    const storeState = nx.get(value, 'state');
+    state[storeKey] = storeState;
+  });
+  return state;
+};
+
+export const StateContext = createContext<typeof useReducer>({});
+
+export const StateProvider = ({ store, children }) => {
+  const initialState = getInitialState(store);
   const value = useReducer(reducer, initialState);
+
+  console.log('initialState:', initialState);
 
   nx.$get = (inKey, inDefault) => {
     const state = value[0];
@@ -15,28 +41,23 @@ export const StateProvider = ({ reducer, initialState, children }) => {
 
   nx.$set = (inKey, inValue) => {
     const state = value[0];
-    const idx = inKey.indexOf('.');
-    const [module, path] = nx.slice2str(inKey, idx + 1);
+    const [module, path] = nx.slice2str(inKey, '.')!;
     const oldValue = nx.get(state, inKey);
     const newState = nx.set(state, inKey, inValue);
     const dispatch = value[1] as any;
-    dispatch({ type: '__set__', newTheme: newState });
+    dispatch({ type: '__set__', action: newState });
     const newValue = nx.get(state, inKey);
-    const watchers = nx.get(state, [module, 'watch'].join('.'));
+    const watchers = nx.get(store, [module, 'watch'].join('.'));
     nx.forIn(watchers, (key, watcher) => {
-      console.log(key, path);
-      if (key === path) {
-        watcher(newValue, oldValue);
-      }
+      if (key === path) watcher(newValue, oldValue);
     });
-    // console.log('change: ', inKey, newValue, oldValue);
   };
 
   nx.$call = (inKey, ...args) => {
     const state = value[0];
     const [module, method] = inKey.split('.');
     const path = [module, 'actions', method].join('.');
-    const fn = nx.get(state, path);
+    const fn = nx.get(store, path);
     return fn && fn(...args);
   };
   // nx.$set = (inKey, inValue) =xx;
@@ -53,14 +74,7 @@ StateProvider.propTypes = {
   /**
    * Object containing initial state value.
    */
-  initialState: PropTypes.shape({}).isRequired,
-
-  /**
-   *
-   * @param {object} state
-   * @param {object} action
-   */
-  reducer: PropTypes.func.isRequired,
+  store: PropTypes.any,
 };
 
 export const useState = () => {

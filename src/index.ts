@@ -4,7 +4,7 @@
 // https://react.dev/reference/react/useReducer
 // https://github.com/aric-tpls/react-tiny-state
 
-import React, { createContext, useReducer, useState, useEffect } from 'react';
+import React, { createContext, useReducer, useState, useEffect, useContext } from 'react';
 import nx from '@jswork/next';
 import EventMitt from '@jswork/event-mitt';
 
@@ -83,14 +83,20 @@ nx.$defineStore = function (inName: string, inDescriptor: StoreDescriptor) {
   return inDescriptor;
 };
 
+nx.$use = (inKey: string, inDefault?: any) => {
+  const value = useContext(StateContext);
+  const state = value[0];
+  return nx.get(state, inKey, inDefault);
+};
+
 const StateProvider = ({ store, children }: StateProviderProps) => {
   const initialState = getInitialState(store);
   const value = useReducer(reducer, initialState);
   const [ts, setTs] = useState<number>();
 
   useEffect(() => {
-    const res = EVENT_BUS.one(CHANGE_EVENT, () => setTs(Date.now()));
-    return () => res.destroy();
+    // const res = EVENT_BUS.one(CHANGE_EVENT, () => setTs(Date.now()));
+    // return () => res.destroy();
   }, []);
 
   nx.$get = (inKey: string, inDefault?) => {

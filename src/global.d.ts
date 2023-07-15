@@ -19,6 +19,7 @@ type StateProviderProps = {
 
 interface NxStatic {
   $defineStore(inName: string, inDescriptor: StoreDescriptor): StoreDescriptor;
+  $use(inPath: string, inDefault?: any): any;
   $get(inPath: string, inDefault?: any): any;
   $set(inPath: string, inValue: any): void;
   $call(inPath: string, inArgs?: any[]): any;

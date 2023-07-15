@@ -1,4 +1,4 @@
-export default {
+export default nx.$defineStore('theme', {
   state: {
     primary: 'green',
     child: {
@@ -16,4 +16,4 @@ export default {
       console.log('when a change', newValue, oldValue);
     },
   },
-};
+});

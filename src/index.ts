@@ -2,6 +2,7 @@
 // https://medium.com/simply/state-management-with-react-hooks-and-context-api-at-10-lines-of-code-baf6be8302c
 // https://playcode.io/1533196
 // https://react.dev/reference/react/useReducer
+// https://github.com/aric-tpls/react-tiny-state
 
 import React, { createContext, useReducer, useState, useEffect } from 'react';
 import nx from '@jswork/next';

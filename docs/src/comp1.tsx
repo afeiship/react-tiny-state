@@ -1,5 +1,3 @@
-import { Observer } from './tiny-state';
-
 export default (props) => {
   const state = nx.$get('theme');
   const profile = nx.$get('user.profile');

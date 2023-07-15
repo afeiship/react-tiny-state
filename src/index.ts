@@ -18,7 +18,6 @@ const eventBus = Object.assign({}, EventMitt);
 const DPS_KEY = '__@dps@__';
 const CHANGE_EVENT = 'state.change';
 
-type ContextType = ReturnType<typeof useReducer>;
 type StateProviderProps = {
   store: Record<string, any>;
   children: React.ReactNode;
@@ -139,11 +138,7 @@ const StateProvider = ({ store, children }: StateProviderProps) => {
     return nx.invoke(ctx, fn, args);
   };
 
-  return (
-    <StateContext.Provider key={ts} value={value}>
-      {children}
-    </StateContext.Provider>
-  );
+  return React.createElement(StateContext.Provider, { key: ts, value }, children);
 };
 
 // for commonjs es5 require

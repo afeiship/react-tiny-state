@@ -1,9 +1,20 @@
+declare module '@jswork/react-tiny-state';
+
+type Watcher = (newValue: any, oldValue: any) => void;
+type ActionFn = (inState: any) => Promise<any> | any;
+type GetterFn = (inState: any) => any;
+
 type StoreDescriptor = {
   name?: string;
   state: Record<string, any>;
   getters?: Record<string, GetterFn>;
   actions?: Record<string, ActionFn>;
   watch?: Record<string, Watcher>;
+};
+
+type StateProviderProps = {
+  store: Record<string, any>;
+  children: React.ReactNode;
 };
 
 interface NxStatic {

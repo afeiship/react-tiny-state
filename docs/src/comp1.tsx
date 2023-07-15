@@ -1,4 +1,4 @@
-export default (props) => {
+export default () => {
   const state = nx.$get('theme');
   const profile = nx.$get('user.profile');
   const handleChangeTheme = () => {

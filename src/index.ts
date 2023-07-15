@@ -18,22 +18,6 @@ const EVENT_BUS = Object.assign({}, EventMitt);
 const DPS_KEY = '__@dps@__';
 const CHANGE_EVENT = 'state.change';
 
-type StateProviderProps = {
-  store: Record<string, any>;
-  children: React.ReactNode;
-};
-
-type Watcher = (newValue: any, oldValue: any) => void;
-type ActionFn = (inState: any) => Promise<any> | any;
-type GetterFn = (inState: any) => any;
-type StoreDescriptor = {
-  name?: string;
-  state: Record<string, any>;
-  getters?: Record<string, GetterFn>;
-  actions?: Record<string, ActionFn>;
-  watch?: Record<string, Watcher>;
-};
-
 const StateContext = createContext<any>(null);
 
 const reducer = (inState, inAction) => {

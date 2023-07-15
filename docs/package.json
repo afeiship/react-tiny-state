@@ -10,11 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@jswork/event-mitt": "^1.0.4",
     "@jswork/next": "^1.1.11",
-    "@jswork/next-camelize": "^1.0.2",
-    "@jswork/next-invoke": "^1.0.1",
-    "@jswork/next-slice2str": "^1.0.4",
+    "@jswork/react-tiny-state": "^1.0.0",
     "prop-types": "^15.8.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"

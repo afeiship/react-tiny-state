@@ -2,7 +2,7 @@ import '@jswork/next';
 import '@jswork/next-slice2str';
 import '@jswork/next-camelize';
 import '@jswork/next-invoke';
-import { StateProvider } from './tiny-state';
+import StateProvider from '@jswork/react-tiny-state';
 import Comp1 from './comp1';
 import stores from './shared/stores';
 

@@ -1,19 +1,18 @@
-import { useState } from './tiny-state';
+import { Observer } from './tiny-state';
 
 export default (props) => {
-  const [state, dispatch] = useState();
-
+  const state = nx.$get('theme');
+  const profile = nx.$get('user.profile');
   const handleChangeTheme = () => {
-    dispatch({
-      type: 'changeTheme',
-      newTheme: {
-        primary: 'red',
-      },
-    });
+    console.log('change theme/state: ', state);
   };
+
   return (
     <div className="App">
-      <h1>Hello React. - {state.theme.primary}</h1>
+      <h1>Hello React. - {state.primary}</h1>
+      <pre>
+        <code>{JSON.stringify(profile, null, 2)}</code>
+      </pre>
       <button onClick={handleChangeTheme}>ChangeTheme</button>
     </div>
   );

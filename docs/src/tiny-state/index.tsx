@@ -1,12 +1,13 @@
 // https://github.com/lukashala/react-simply/blob/master/tools/state/src/index.js
-import React, { createContext, useContext, useReducer } from 'react';
+import React, { Fragment, createContext, useContext, useReducer } from 'react';
 import type { Dispatch } from 'react';
 import PropTypes from 'prop-types';
 
 const reducer = (state, action) => {
-  const { type, ...payload } = action;
-  switch (action.type) {
+  const { type, payload } = action;
+  switch (type) {
     case '__set__':
+      // console.log(state, payload);
       return {
         ...state,
         ...payload,
@@ -26,18 +27,11 @@ const getInitialState = (store) => {
   return state;
 };
 
-export const StateContext = createContext<typeof useReducer>({});
+export const StateContext = createContext<any>(null);
 
 export const StateProvider = ({ store, children }) => {
   const initialState = getInitialState(store);
   const value = useReducer(reducer, initialState);
-
-  console.log('initialState:', initialState);
-
-  nx.$get = (inKey, inDefault) => {
-    const state = value[0];
-    return nx.get(state, inKey, inDefault);
-  };
 
   nx.$set = (inKey, inValue) => {
     const state = value[0];
@@ -45,7 +39,9 @@ export const StateProvider = ({ store, children }) => {
     const oldValue = nx.get(state, inKey);
     const newState = nx.set(state, inKey, inValue);
     const dispatch = value[1] as any;
-    dispatch({ type: '__set__', action: newState });
+    dispatch({ type: '__set__', payload: newState });
+
+    // process watchers:
     const newValue = nx.get(state, inKey);
     const watchers = nx.get(store, [module, 'watch'].join('.'));
     nx.forIn(watchers, (key, watcher) => {
@@ -54,11 +50,11 @@ export const StateProvider = ({ store, children }) => {
   };
 
   nx.$call = (inKey, ...args) => {
-    const state = value[0];
     const [module, method] = inKey.split('.');
     const path = [module, 'actions', method].join('.');
     const fn = nx.get(store, path);
-    return fn && fn(...args);
+    const ctx = store[module].state;
+    return fn && fn.apply(ctx, args);
   };
   // nx.$set = (inKey, inValue) =xx;
   // nx.$call = xxx;
@@ -77,8 +73,8 @@ StateProvider.propTypes = {
   store: PropTypes.any,
 };
 
-export const useState = () => {
+nx.$get = (inKey: string, inDefault?: any) => {
   const value = useContext(StateContext);
-  // console.log('dispathc:', value);
-  return value;
+  const state = value[0];
+  return nx.get(state, inKey, inDefault);
 };

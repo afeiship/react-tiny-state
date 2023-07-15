@@ -1,6 +1,6 @@
 {
   "name": "@jswork/react-tiny-state",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Super simple state management for React apps.",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
@@ -60,5 +60,10 @@
     "@jswork/next-camelize": "^1.0.3",
     "@jswork/next-invoke": "^1.0.1",
     "@jswork/next-slice2str": "^1.0.5"
-  }
+  },
+  "keywords": [
+    "react",
+    "context",
+    "state"
+  ]
 }

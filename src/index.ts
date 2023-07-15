@@ -46,22 +46,26 @@ const getInitialState = (inMainStore) => {
 
 // ===== public method ====
 nx.$defineStore = function (inName: string, inDescriptor: StoreDescriptor) {
-  const { state, getters } = inDescriptor;
+  const { state: fnState, getters } = inDescriptor;
+  const state = typeof fnState === 'function' ? fnState() : fnState;
+  inDescriptor.state = state;
 
   // define for actions:
   nx.forIn(state, (key, value) => {
     if (key !== DPS_KEY) {
+      const propName = `${DPS_KEY}.${inName}.${key}`;
+
       Object.defineProperty(state, key, {
         set(inValue) {
           // not change:
           if (this[key] === inValue) return;
 
           // changed
-          this[`${DPS_KEY}.${key}`] = inValue;
+          this[propName] = inValue;
           EVENT_BUS.emit(CHANGE_EVENT);
         },
         get() {
-          return this[`${DPS_KEY}.${key}`] || value;
+          return this[propName] || value;
         },
       });
     }

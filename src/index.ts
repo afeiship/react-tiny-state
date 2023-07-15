@@ -14,7 +14,7 @@ import '@jswork/next-invoke';
 
 declare var wx: any;
 
-const eventBus = Object.assign({}, EventMitt);
+const EVENT_BUS = Object.assign({}, EventMitt);
 const DPS_KEY = '__@dps@__';
 const CHANGE_EVENT = 'state.change';
 
@@ -74,7 +74,7 @@ nx.$defineStore = function (inName: string, inDescriptor: StoreDescriptor) {
           // changed
           this[`${DPS_KEY}.${key}`] = inValue;
           nx.$set([inName, key].join('.'), inValue);
-          eventBus.emit(CHANGE_EVENT);
+          EVENT_BUS.emit(CHANGE_EVENT);
         },
         get() {
           return this[`${DPS_KEY}.${key}`] || value;
@@ -101,7 +101,7 @@ const StateProvider = ({ store, children }: StateProviderProps) => {
   const [ts, setTs] = useState<number>();
 
   useEffect(() => {
-    const res = eventBus.one(CHANGE_EVENT, () => setTs(Date.now()));
+    const res = EVENT_BUS.one(CHANGE_EVENT, () => setTs(Date.now()));
     return () => res.destroy();
   }, []);
 
@@ -132,7 +132,7 @@ const StateProvider = ({ store, children }: StateProviderProps) => {
     const fn = nx.get(store, path);
     const ctx = store[module].state;
 
-    eventBus.emit(CHANGE_EVENT);
+    EVENT_BUS.emit(CHANGE_EVENT);
 
     // force update
     return nx.invoke(ctx, fn, args);

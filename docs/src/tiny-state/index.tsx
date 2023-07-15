@@ -18,7 +18,7 @@ const reducer = (state, action) => {
 };
 
 const getInitialState = (store) => {
-  const state = { '@dps': {} };
+  const state = { '@dps@': {} };
   nx.forIn(store, (key, value) => {
     const storeKey = nx.camelize(value.name || key);
     const storeState = nx.get(value, 'state');
@@ -36,6 +36,7 @@ const useForceUpdate = () => {
 
 nx.$defineStore = function (inName: string, inDescriptor: any) {
   const { state, getters } = inDescriptor;
+
   nx.forIn(state, (key, value) => {
     Object.defineProperty(state, key, {
       set(inValue) {
@@ -54,6 +55,14 @@ nx.$defineStore = function (inName: string, inDescriptor: any) {
     });
   });
 
+  nx.forIn(getters, (key, value) => {
+    Object.defineProperty(state, key, {
+      get() {
+        return value.call(state, state);
+      },
+    });
+  });
+
   return inDescriptor;
 };
 
@@ -61,6 +70,11 @@ export const StateProvider = ({ store, children }) => {
   const initialState = getInitialState(store);
   const value = useReducer(reducer, initialState);
   const forceUpdate = useForceUpdate();
+
+  nx.$query = (inKey: string, inDefault?) => {
+    const state = value[0];
+    return nx.get(state, inKey, inDefault);
+  };
 
   nx.$set = function (inKey, inValue) {
     const state = value[0];

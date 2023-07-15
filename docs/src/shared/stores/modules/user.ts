@@ -3,11 +3,16 @@ export default nx.$defineStore('user', {
     profile: null,
     session: null,
   },
+  getters: {
+    isLogin(state: any) {
+      return !!nx.get(state, 'profile.login');
+    },
+  },
   actions: {
     hello() {
       console.log('i am user');
     },
-    async profile({ username }) {
+    async profile({ username }: any) {
       const res = await fetch(`https://api.github.com/users/${username}`).then((r) => r.json());
       // console.log(res, this);
       this.profile = res;
@@ -15,7 +20,7 @@ export default nx.$defineStore('user', {
     },
   },
   watch: {
-    session(newValue) {
+    session(newValue: any) {
       console.log('session change: ', newValue);
     },
   },

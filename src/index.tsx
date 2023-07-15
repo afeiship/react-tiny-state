@@ -102,7 +102,8 @@ const StateProvider = ({ store, children }: StateProviderProps) => {
   const [ts, setTs] = useState<number>();
 
   useEffect(() => {
-    eventBus.one(CHANGE_EVENT, () => setTs(Date.now()));
+    const res = eventBus.one(CHANGE_EVENT, () => setTs(Date.now()));
+    return () => res.destroy();
   }, []);
 
   // forceUpdate();

@@ -56,7 +56,6 @@
     ]
   },
   "dependencies": {
-    "@jswork/event-mitt": "^1.0.4",
     "@jswork/next-camelize": "^1.0.3",
     "@jswork/next-invoke": "^1.0.1",
     "@jswork/next-slice2str": "^1.0.5"

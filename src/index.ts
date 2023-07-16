@@ -6,7 +6,6 @@
 
 import React, { createContext, useReducer, useState, useEffect, useContext } from 'react';
 import nx from '@jswork/next';
-import EventMitt from '@jswork/event-mitt';
 
 // packages
 import '@jswork/next-slice2str';
@@ -15,7 +14,6 @@ import '@jswork/next-invoke';
 
 declare var wx: any;
 
-const EVENT_BUS = Object.assign({}, EventMitt);
 const DPS_KEY = '__@dps@__';
 const CHANGE_EVENT = 'state.change';
 
@@ -62,7 +60,6 @@ nx.$defineStore = function (inName: string, inDescriptor: StoreDescriptor) {
 
           // changed
           this[propName] = inValue;
-          EVENT_BUS.emit(CHANGE_EVENT);
         },
         get() {
           return typeof this[propName] === 'undefined' ? value : this[propName];
@@ -92,12 +89,6 @@ nx.$use = (inKey: string, inDefault?: any) => {
 const StateProvider = ({ store, children }: StateProviderProps) => {
   const initialState = getInitialState(store);
   const value = useReducer(reducer, initialState);
-  const [ts, setTs] = useState<number>();
-
-  useEffect(() => {
-    // const res = EVENT_BUS.one(CHANGE_EVENT, () => setTs(Date.now()));
-    // return () => res.destroy();
-  }, []);
 
   nx.$get = (inKey: string, inDefault?) => {
     const state = value[0];
@@ -126,13 +117,11 @@ const StateProvider = ({ store, children }: StateProviderProps) => {
     const fn = nx.get(store, path);
     const ctx = store[module].state;
 
-    EVENT_BUS.emit(CHANGE_EVENT);
-
     // force update
     return nx.invoke(ctx, fn, args);
   };
 
-  return React.createElement(StateContext.Provider, { key: ts, value }, children);
+  return React.createElement(StateContext.Provider, { value }, children);
 };
 
 // for commonjs es5 require

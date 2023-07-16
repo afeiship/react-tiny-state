@@ -15,14 +15,13 @@ import '@jswork/next-invoke';
 declare var wx: any;
 
 const DPS_KEY = '__@dps@__';
-const CHANGE_EVENT = 'state.change';
-
+const ACTION_SET = '__set__';
 const StateContext = createContext<any>(null);
 
 const reducer = (inState, inAction) => {
   const { type, payload } = inAction;
   switch (type) {
-    case '__set__':
+    case ACTION_SET:
       return {
         ...inState,
         ...payload,
@@ -101,7 +100,7 @@ const StateProvider = ({ store, children }: StateProviderProps) => {
     const oldValue = nx.get(state, inKey);
     const newState = nx.set(state, inKey, inValue);
     const dispatch = value[1] as any;
-    dispatch({ type: '__set__', payload: newState });
+    dispatch({ type: ACTION_SET, payload: newState });
 
     const newValue = nx.get(state, inKey);
     const watchers = nx.get(store, `${module}.watch`);
@@ -116,8 +115,6 @@ const StateProvider = ({ store, children }: StateProviderProps) => {
     const path = `${module}.actions.${method}`;
     const fn = nx.get(store, path);
     const ctx = store[module].state;
-
-    // force update
     return nx.invoke(ctx, fn, args);
   };
 

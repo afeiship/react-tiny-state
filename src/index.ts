@@ -33,7 +33,7 @@ const reducer = (inState, inAction) => {
 };
 
 const getInitialState = (inMainStore) => {
-  const state = { [DPS_KEY]: {} };
+  const state = {};
   nx.forIn(inMainStore, (key, value) => {
     const storeKey = nx.camelize(value.name || key);
     const storeState = nx.get(value, 'state');
@@ -51,7 +51,7 @@ nx.$defineStore = function (inName: string, inDescriptor: StoreDescriptor) {
   // define for actions:
   nx.forIn(state, (key, value) => {
     if (key !== DPS_KEY) {
-      const propName = `${DPS_KEY}.${inName}.${key}`;
+      const propName = `${DPS_KEY}.${key}`;
 
       Object.defineProperty(state, key, {
         set(inValue) {

@@ -104,9 +104,10 @@ const StateProvider = ({ store, children }: StateProviderProps) => {
 
     const newValue = nx.get(state, inKey);
     const watchers = nx.get(store, `${module}.watch`);
+    const currentState = nx.get(state, module);
 
     nx.forIn(watchers, (key, watcher) => {
-      if (key === path) watcher.call(state, newValue, oldValue);
+      if (key === path) watcher.call(currentState, newValue, oldValue);
     });
   };
 

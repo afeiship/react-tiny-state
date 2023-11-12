@@ -100,11 +100,11 @@ const StateProvider = ({ store, children }: StateProviderProps) => {
     const oldValue = nx.get(state, inKey);
     const newState = nx.set(state, inKey, inValue);
     const dispatch = value[1] as any;
-    const watchKey = nx.camelize(`${module}.watch`);
+    const moduleKey = nx.camelize(module);
     dispatch({ type: ACTION_SET, payload: newState });
 
     const newValue = nx.get(state, inKey);
-    const watchers = nx.get(store, watchKey);
+    const watchers = nx.get(store, `${moduleKey}.watch`);
     const currentState = nx.get(state, module);
 
     nx.forIn(watchers, (key, watcher) => {
@@ -114,9 +114,10 @@ const StateProvider = ({ store, children }: StateProviderProps) => {
 
   nx.$call = (inKey, ...args) => {
     const [module, method] = inKey.split('.');
-    const actionsKey = nx.camelize(`${module}.actions.${method}`);
-    const fn = nx.get(store, actionsKey);
-    const ctx = store[module].state;
+    const moduleKey = nx.camelize(module);
+    const path = `${moduleKey}.actions.${method}`;
+    const fn = nx.get(store, path);
+    const ctx = store[moduleKey].state;
     return nx.invoke(ctx, fn, args);
   };
 

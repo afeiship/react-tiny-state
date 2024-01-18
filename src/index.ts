@@ -42,7 +42,7 @@ const getInitialState = (inMainStore) => {
 };
 
 // ===== public method ====
-nx.$defineStore = function (inName: string, inDescriptor: StoreDescriptor) {
+nx.$defineStore = function(inDescriptor: StoreDescriptor) {
   const { state: fnState, getters } = inDescriptor;
   const state = typeof fnState === 'function' ? fnState() : fnState;
   inDescriptor.state = state;
@@ -94,7 +94,7 @@ const StateProvider = ({ store, children }: StateProviderProps) => {
     return nx.get(state, inKey, inDefault);
   };
 
-  nx.$set = function (inKey, inValue) {
+  nx.$set = function(inKey, inValue) {
     const state = value[0];
     const [module, path] = nx.slice2str(inKey, '.')!;
     const oldValue = nx.get(state, inKey);

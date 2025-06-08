@@ -61,7 +61,12 @@ nx.$defineStore = function(inDescriptor: StoreDescriptor) {
           this[propName] = inValue;
         },
         get() {
-          return typeof this[propName] === 'undefined' ? value : this[propName];
+          // Potential issue: If this[propName] is explicitly set to undefined,
+          // this will return the initial 'value' instead of undefined.
+          // Consider using Object.prototype.hasOwnProperty.call(this, propName)
+          // or checking against a specific marker for 'not set yet'.
+          // Fix: Check if the internal property exists using hasOwnProperty
+          return !Object.prototype.hasOwnProperty.call(this, propName) ? value : this[propName];
         },
       });
     }

@@ -1,131 +1,144 @@
-// https://www.npmjs.com/package/@react-simply/state
-// https://medium.com/simply/state-management-with-react-hooks-and-context-api-at-10-lines-of-code-baf6be8302c
-// https://playcode.io/1533196
-// https://react.dev/reference/react/useReducer
-// https://github.com/aric-tpls/react-tiny-state
+import { useSyncExternalStore } from 'react';
+import { camelize, splitPath, getByPath, setByPath, isEqual } from './utils';
 
-import React, { createContext, useReducer, useContext } from 'react';
-import nx from '@jswork/next';
-import { camelize, slice2str, invoke } from './utils';
+declare var nx: any;
 
-declare var wx: any;
+// 单个store模块描述（每个文件导出一个，传给 $defineStore）
+export type StoreModuleDef<S = any, G = any, A = any> = {
+  /** 用户手动指定模块名，优先级最高 */
+  name?: string;
+  state: S | (() => S);
+  getters?: G;
+  actions?: A;
+  watch?: Record<string, (newVal: any, oldVal: any) => void>;
+};
 
-const DPS_KEY = '__@dps@__';
-const ACTION_SET = '__set__';
-const StateContext = createContext<any>(null);
+type Listener = () => void;
 
-const reducer = (inState, inAction) => {
-  const { type, payload } = inAction;
-  switch (type) {
-    case ACTION_SET:
-      return {
-        ...inState,
-        ...payload,
-      };
-    default:
-      return inState;
+// ========== 全局单例存储 ==========
+let globalState: Record<string, any> = {};
+const listeners = new Set<Listener>();
+
+const moduleRegistry: {
+  // key = 最终驼峰模块名
+  getters: Record<string, Record<string, (modState: any) => any>>;
+  actions: Record<string, Record<string, Function>>;
+  watchEntries: Array<{ module: string; path: string; cb: (nv: any, ov: any) => void }>;
+} = {
+  getters: {},
+  actions: {},
+  watchEntries: [],
+};
+
+function notify() {
+  listeners.forEach((l) => l());
+}
+
+function subscribe(listener: Listener) {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+function getModuleGetters(modName: string) {
+  const modState = globalState[modName];
+  const modGetters = moduleRegistry.getters[modName] ?? {};
+  const proxy: Record<string, any> = {};
+  for (const key in modGetters) {
+    Object.defineProperty(proxy, key, {
+      get() {
+        return modGetters[key](modState);
+      },
+      enumerable: true,
+    });
   }
-};
+  return proxy;
+}
 
-const getInitialState = (inMainStore) => {
-  const state = {};
-  nx.forIn(inMainStore, (key, value) => {
-    const storeKey = camelize(value.name || key);
-    const storeState = nx.get(value, 'state');
-    state[storeKey] = storeState;
-  });
-  return state;
-};
+/**
+ * nx.$defineStore
+ * @param descriptor 单个模块定义，来自独立文件
+ * @param autoName 【可选】glob从文件名解析出来自动生成的名字；如果descriptor.name存在，则优先用descriptor.name
+ */
+nx.$defineStore = function (descriptor: StoreModuleDef, autoName?: string) {
+  // 优先级：descriptor.name > autoName
+  const rawName = descriptor.name ?? autoName;
+  if (!rawName)
+    throw new Error('$defineStore: must provide name in descriptor or pass autoName argument');
 
-// ===== public method ====
-nx.$defineStore = function (inDescriptor: StoreDescriptor) {
-  const { state: fnState, getters } = inDescriptor;
-  const state = typeof fnState === 'function' ? fnState() : fnState;
-  inDescriptor.state = state;
+  const modRealName = camelize(rawName);
 
-  // define for actions:
-  nx.forIn(state, (key, value) => {
-    if (key !== DPS_KEY) {
-      const propName = `${DPS_KEY}.${key}`;
+  // 初始化state，支持state为函数
+  const modState = typeof descriptor.state === 'function' ? descriptor.state() : descriptor.state;
+  globalState[modRealName] = structuredClone(modState);
 
-      Object.defineProperty(state, key, {
-        set(inValue) {
-          // not change:
-          if (this[key] === inValue) return;
+  moduleRegistry.getters[modRealName] = descriptor.getters ?? {};
+  moduleRegistry.actions[modRealName] = descriptor.actions ?? {};
 
-          // changed
-          this[propName] = inValue;
-        },
-        get() {
-          // Potential issue: If this[propName] is explicitly set to undefined,
-          // this will return the initial 'value' instead of undefined.
-          // Consider using Object.prototype.hasOwnProperty.call(this, propName)
-          // or checking against a specific marker for 'not set yet'.
-          // Fix: Check if the internal property exists using hasOwnProperty
-          return !Object.prototype.hasOwnProperty.call(this, propName) ? value : this[propName];
-        },
+  // 注册watch：path 存完整路径（module + '.' + watchPath），否则 watch 永不触发
+  if (descriptor.watch) {
+    for (const watchPath in descriptor.watch) {
+      moduleRegistry.watchEntries.push({
+        module: modRealName,
+        path: modRealName + '.' + watchPath,
+        cb: descriptor.watch[watchPath],
       });
     }
-  });
+  }
 
-  // define getters:
-  nx.forIn(getters, (key, value) => {
-    Object.defineProperty(state, key, {
-      get() {
-        return value.call(state, state);
-      },
-    });
-  });
-
-  return inDescriptor;
+  return descriptor;
 };
 
-nx.$use = (inKey: string, inDefault?: any) => {
-  const value = useContext(StateContext);
-  const state = value[0];
-  return nx.get(state, inKey, inDefault);
+nx.$get = function (path: string, defaultValue?: any) {
+  const segments = splitPath(path);
+  // 路径第二段命中 getter 时调用它（如 'user.isLogin' 返回计算值）
+  if (segments.length >= 2) {
+    const [modName, second] = segments;
+    const getter = moduleRegistry.getters[modName]?.[second];
+    if (getter) return getter(globalState[modName]);
+  }
+  return getByPath(globalState, path, defaultValue);
 };
 
-const StateProvider = ({ store, children }: StateProviderProps) => {
-  const initialState = getInitialState(store);
-  const value = useReducer(reducer, initialState);
+nx.$set = function (path: string, value: any) {
+  const oldState = globalState;
+  const oldVal = getByPath(oldState, path);
 
-  nx.$get = (inKey: string, inDefault?) => {
-    const state = value[0];
-    return nx.get(state, inKey, inDefault);
-  };
+  globalState = setByPath(globalState, path, value);
+  const newVal = getByPath(globalState, path);
 
-  nx.$set = function (inKey, inValue) {
-    const state = value[0];
-    const [module, path] = slice2str(inKey, '.')!;
-    const oldValue = nx.get(state, inKey);
-    const newState = nx.set(state, inKey, inValue);
-    const dispatch = value[1] as any;
-    dispatch({ type: ACTION_SET, payload: newState });
-
-    const newValue = nx.get(state, inKey);
-    const watchers = nx.get(store, `${module}.watch`);
-    const currentState = nx.get(state, module);
-
-    nx.forIn(watchers, (key, watcher) => {
-      if (key === path) watcher.call(currentState, newValue, oldValue);
-    });
-  };
-
-  nx.$call = (inKey, ...args) => {
-    const [module, method] = inKey.split('.');
-    const path = `${module}.actions.${method}`;
-    const fn = nx.get(store, path);
-    const ctx = store[module].state;
-    return invoke(ctx, fn, args);
-  };
-
-  return React.createElement(StateContext.Provider, { value }, children);
+  for (const entry of moduleRegistry.watchEntries) {
+    const wOld = getByPath(oldState, entry.path);
+    const wNew = getByPath(globalState, entry.path);
+    if (!isEqual(wOld, wNew)) {
+      entry.cb(wNew, wOld);
+    }
+  }
+  notify();
 };
 
-// for commonjs es5 require
-// if (typeof module !== 'undefined' && module.exports && typeof wx === 'undefined') {
-//   module.exports = StateProvider;
-// }
+nx.$call = function (path: string, ...args: any[]) {
+  const [modName, actionName] = splitPath(path);
+  const fn = moduleRegistry.actions[modName]?.[actionName];
+  if (!fn) throw new Error(`action not found: ${path}`);
+  const modState = globalState[modName];
+  const getters = getModuleGetters(modName);
+  // action 以模块自身 state 为首参，并以 modState 为 this
+  return fn.call(modState, modState, getters, ...args);
+};
 
-export default StateProvider;
+nx.$use = function (path: string, defaultValue?: any) {
+  const value = useSyncExternalStore(
+    subscribe,
+    () => nx.$get(path, defaultValue),
+    () => defaultValue
+  );
+  return value;
+};
+
+nx.$resetStore = function () {
+  globalState = {};
+  moduleRegistry.watchEntries.length = 0;
+  notify();
+};
+
+export default nx;

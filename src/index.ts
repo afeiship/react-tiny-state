@@ -1,7 +1,8 @@
 import { useSyncExternalStore } from 'react';
-import { camelize, splitPath, getByPath, setByPath, isEqual } from './utils';
+import deepEqual from 'fast-deep-equal';
+import { camelize } from './utils';
 
-declare var nx: any;
+import '@jswork/next';
 
 // 单个store模块描述（每个文件导出一个，传给 $defineStore）
 export type StoreModuleDef<S = any, G = any, A = any> = {
@@ -89,35 +90,34 @@ nx.$defineStore = function (descriptor: StoreModuleDef, autoName?: string) {
 };
 
 nx.$get = function (path: string, defaultValue?: any) {
-  const segments = splitPath(path);
+  const segments = path.split('.');
   // 路径第二段命中 getter 时调用它（如 'user.isLogin' 返回计算值）
   if (segments.length >= 2) {
     const [modName, second] = segments;
     const getter = moduleRegistry.getters[modName]?.[second];
     if (getter) return getter(globalState[modName]);
   }
-  return getByPath(globalState, path, defaultValue);
+  return nx.get(globalState, path, defaultValue);
 };
 
 nx.$set = function (path: string, value: any) {
-  const oldState = globalState;
-  const oldVal = getByPath(oldState, path);
+  // nx.set 原地修改 globalState，先取变更前的值再写入
+  const oldVal = nx.get(globalState, path);
+  const oldWatchVals = moduleRegistry.watchEntries.map((entry) => nx.get(globalState, entry.path));
 
-  globalState = setByPath(globalState, path, value);
-  const newVal = getByPath(globalState, path);
+  nx.set(globalState, path, value);
 
-  for (const entry of moduleRegistry.watchEntries) {
-    const wOld = getByPath(oldState, entry.path);
-    const wNew = getByPath(globalState, entry.path);
-    if (!isEqual(wOld, wNew)) {
-      entry.cb(wNew, wOld);
+  moduleRegistry.watchEntries.forEach((entry, i) => {
+    const wNew = nx.get(globalState, entry.path);
+    if (!deepEqual(oldWatchVals[i], wNew)) {
+      entry.cb(wNew, oldWatchVals[i]);
     }
-  }
+  });
   notify();
 };
 
 nx.$call = function (path: string, ...args: any[]) {
-  const [modName, actionName] = splitPath(path);
+  const [modName, actionName] = path.split('.');
   const fn = moduleRegistry.actions[modName]?.[actionName];
   if (!fn) throw new Error(`action not found: ${path}`);
   const modState = globalState[modName];

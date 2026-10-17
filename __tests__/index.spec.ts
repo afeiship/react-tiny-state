@@ -1,9 +1,195 @@
+import '@jswork/next';
 import fn from '../src';
-import { camelize, slice2str, invoke } from '../src/utils';
+import { camelize } from '../src/utils';
 
 describe('api.basic', () => {
-  test('default export is the provider component', () => {
-    expect(typeof fn).toBe('function');
+  beforeEach(() => fn.$resetStore());
+
+  test('default export is the global nx', () => {
+    expect(typeof fn.$defineStore).toBe('function');
+    expect(fn).toBe((globalThis as any).nx);
+  });
+
+  test('exposes all global apis', () => {
+    ['$defineStore', '$get', '$set', '$call', '$use', '$resetStore'].forEach((key) => {
+      expect(typeof fn[key]).toBe('function');
+    });
+  });
+});
+
+describe('api.$defineStore', () => {
+  beforeEach(() => fn.$resetStore());
+
+  test('uses autoName and camelizes it', () => {
+    fn.$defineStore({ state: { count: 0 } }, 'user-info');
+    expect(fn.$get('userInfo.count')).toBe(0);
+  });
+
+  test('descriptor.name has higher priority than autoName', () => {
+    fn.$defineStore({ name: 'theme', state: { primary: 'green' } }, 'other');
+    expect(fn.$get('theme.primary')).toBe('green');
+    expect(fn.$get('other')).toBeUndefined();
+  });
+
+  test('throws without name', () => {
+    expect(() => fn.$defineStore({ state: {} })).toThrow();
+  });
+
+  test('supports function state', () => {
+    fn.$defineStore({ state: () => ({ items: [1, 2] }) }, 'cart');
+    expect(fn.$get('cart.items')).toEqual([1, 2]);
+  });
+});
+
+describe('api.$get/$set', () => {
+  beforeEach(() => {
+    fn.$resetStore();
+    fn.$defineStore(
+      {
+        state: { primary: 'green', child: { n1: { a: 123 } } },
+      },
+      'theme'
+    );
+  });
+
+  test('reads nested path', () => {
+    expect(fn.$get('theme.primary')).toBe('green');
+    expect(fn.$get('theme.child.n1.a')).toBe(123);
+  });
+
+  test('returns default value on missing path', () => {
+    expect(fn.$get('theme.missing', 'dv')).toBe('dv');
+    expect(fn.$get('nope.module.x')).toBeUndefined();
+  });
+
+  test('writes nested path', () => {
+    fn.$set('theme.child.n1.a', 456);
+    expect(fn.$get('theme.child.n1.a')).toBe(456);
+    expect(fn.$get('theme.primary')).toBe('green');
+  });
+});
+
+describe('api.getter', () => {
+  beforeEach(() => {
+    fn.$resetStore();
+    fn.$defineStore(
+      {
+        state: { profile: null },
+        getters: {
+          isLogin: (state: any) => !!state.profile?.login,
+        },
+      },
+      'user'
+    );
+  });
+
+  test('$get reads computed value', () => {
+    expect(fn.$get('user.isLogin')).toBe(false);
+    fn.$set('user.profile', { login: 'afei' });
+    expect(fn.$get('user.isLogin')).toBe(true);
+  });
+});
+
+describe('api.watch', () => {
+  let flatCb: jest.Mock;
+  let nestedCb: jest.Mock;
+
+  beforeEach(() => {
+    fn.$resetStore();
+    flatCb = jest.fn();
+    nestedCb = jest.fn();
+    fn.$defineStore(
+      {
+        state: { primary: 'green', child: { n1: { a: 123 } } },
+        watch: {
+          primary: flatCb,
+          'child.n1.a': nestedCb,
+        },
+      },
+      'theme'
+    );
+  });
+
+  test('fires with new/old value on module field change', () => {
+    fn.$set('theme.primary', 'red');
+    expect(flatCb).toHaveBeenCalledWith('red', 'green');
+    expect(nestedCb).not.toHaveBeenCalled();
+  });
+
+  test('fires on nested path change (module-prefixed watch path)', () => {
+    fn.$set('theme.child.n1.a', 456);
+    expect(nestedCb).toHaveBeenCalledWith(456, 123);
+    expect(flatCb).not.toHaveBeenCalled();
+  });
+
+  test('does not fire when value is deep-equal', () => {
+    fn.$set('theme.child.n1', { a: 123 });
+    expect(nestedCb).not.toHaveBeenCalled();
+  });
+});
+
+describe('api.$call', () => {
+  beforeEach(() => {
+    fn.$resetStore();
+    fn.$defineStore(
+      {
+        state: { profile: null as any },
+        getters: {
+          isLogin: (state: any) => !!state.profile?.login,
+        },
+        actions: {
+          setProfile(state: any, getters: any, profile: any) {
+            state.profile = profile;
+            return getters.isLogin;
+          },
+          whoami() {
+            return this.profile?.login;
+          },
+          greet(_state: any, _getters: any, prefix: string, suffix: string) {
+            return `${prefix}${this.profile.login}${suffix}`;
+          },
+        },
+      },
+      'user'
+    );
+  });
+
+  test('action receives module state as first argument', () => {
+    const res = fn.$call('user.setProfile', { login: 'afei' });
+    expect(res).toBe(true);
+    expect(fn.$get('user.profile')).toEqual({ login: 'afei' });
+  });
+
+  test('action this points to module state', () => {
+    fn.$call('user.setProfile', { login: 'afei' });
+    expect(fn.$call('user.whoami')).toBe('afei');
+    expect(fn.$call('user.greet', 'hi/', '!')).toBe('hi/afei!');
+  });
+
+  test('throws on unknown action', () => {
+    expect(() => fn.$call('user.missing')).toThrow('action not found: user.missing');
+  });
+});
+
+describe('api.$resetStore', () => {
+  test('clears state so $get returns default value', () => {
+    fn.$defineStore({ state: { primary: 'green' } }, 'theme');
+    expect(fn.$get('theme.primary')).toBe('green');
+
+    fn.$resetStore();
+    expect(fn.$get('theme.primary')).toBeUndefined();
+    expect(fn.$get('theme.primary', 'none')).toBe('none');
+  });
+
+  test('clears watch registrations', () => {
+    const cb = jest.fn();
+    fn.$defineStore({ state: { primary: 'green' }, watch: { primary: cb } }, 'theme');
+    fn.$resetStore();
+
+    // re-register state only, old watcher must stay unregistered
+    fn.$defineStore({ state: { primary: 'green' } }, 'theme');
+    fn.$set('theme.primary', 'red');
+    expect(cb).not.toHaveBeenCalled();
   });
 });
 
@@ -21,56 +207,5 @@ describe('utils.camelize', () => {
 
   test('first char lowercased', () => {
     expect(camelize('Foo-bar')).toBe('fooBar');
-  });
-});
-
-describe('utils.slice2str', () => {
-  test('split by separator', () => {
-    expect(slice2str('user.profile', '.')).toEqual(['user', 'profile']);
-    expect(slice2str('a.b.c', '.')).toEqual(['a', 'b.c']);
-  });
-
-  test('split by index', () => {
-    expect(slice2str('hello', 2)).toEqual(['he', 'llo']);
-    // index + step skips the separator char
-    expect(slice2str('hello', 2, 1)).toEqual(['he', 'lo']);
-  });
-
-  test('empty input returns undefined', () => {
-    expect(slice2str('', 0)).toBeUndefined();
-  });
-});
-
-describe('utils.invoke', () => {
-  test('invoke function with args', () => {
-    const ctx = {
-      base: 10,
-      add(n: number) {
-        return this.base + n;
-      },
-    };
-    expect(invoke(ctx, 'add', [5])).toBe(15);
-    expect(invoke(ctx, 'add', 5)).toBe(15);
-  });
-
-  test('invoke direct function', () => {
-    const fn = (a: number, b: number) => a + b;
-    expect(invoke(null, fn, [1, 2])).toBe(3);
-  });
-
-  test('non-function path returns undefined', () => {
-    const ctx = { x: 1 };
-    expect(invoke(ctx, 'missing')).toBeUndefined();
-  });
-
-  test('matches nx slot style (ctx, path, ...args)', () => {
-    const obj = {
-      name: 'afei',
-      hello(prefix: string) {
-        return `${prefix} ${this.name}`;
-      },
-    };
-    const out = invoke(obj, 'hello', ['hi']);
-    expect(out).toBe('hi afei');
   });
 });

@@ -120,23 +120,32 @@ nx.$call('user.profile', { username: 'afeiship' });
 ```
 Props: `store` (composed store modules), `children`. Merges every module's `state` into the root state and provides it through Context.
 
-### nx.$defineStore(descriptor, autoName?)
+### nx.$defineStore(name, descriptor) / nx.$defineStore(descriptor, autoName?)
 ```ts
+// 1. Name as first argument (Pinia style)
+nx.$defineStore('counter', {
+  state: { count: 0 },
+  getters: { double: (state) => state.count * 2 },
+  actions: { increment: (state) => nx.$set('counter.count', state.count + 1) },
+});
+
+// 2. Name inside descriptor
 nx.$defineStore({
-  name: 'theme',                // optional: module name (higher priority than autoName)
-  state: {...},                 // module state (function state supported)
-  getters: {...},               // computed values, `this` = module state
-  actions: {...},               // methods, `this` = module state
-  watch: {...},                 // path -> (newValue, oldValue), fired by nx.$set
-}, 'autoName');
+  name: 'theme',
+  state: { primary: 'green' },
+  watch: { primary: (newVal, oldVal) => console.log(newVal, oldVal) }
+});
 ```
 
 ### nx.$registerStores(modules)
-Batch register modules imported via Vite's `import.meta.glob`:
+Batch register modules imported via Vite's `import.meta.glob`. Supports nested subdirectories and strips `/index`:
 ```ts
-nx.$registerStores(import.meta.glob('./modules/*.ts', { eager: true, import: 'default' }));
+nx.$registerStores(import.meta.glob('./modules/**/*.ts', { eager: true, import: 'default' }));
 ```
-Automatically infers module name from file basename (e.g. `user-info.ts` -> `userInfo`).
+- `modules/counter.ts` -> `counter`
+- `modules/member/profile.ts` -> `memberProfile`
+- `modules/member/orders.ts` -> `memberOrders`
+- `modules/member/index.ts` -> `member`
 
 State fields are proxied so assignment like `this.profile = res` works internally; getters are exposed as getter properties on the module state (read them via `nx.$get('user.isLogin')`).
 

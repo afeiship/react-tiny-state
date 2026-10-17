@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import deepEqual from 'fast-deep-equal';
-import { camelize } from './utils';
+import { camelize, resolveModuleNameFromPath } from './utils';
 
 import '@jswork/next';
 
@@ -55,17 +55,7 @@ function getModuleGetters(modName: string) {
   return proxy;
 }
 
-/**
- * nx.$defineStore
- * @param descriptor 单个模块定义，来自独立文件
- * @param autoName 【可选】glob从文件名解析出来自动生成的名字；如果descriptor.name存在，则优先用descriptor.name
- */
-nx.$defineStore = function (descriptor: StoreModuleDef, autoName?: string) {
-  // 优先级：descriptor.name > autoName
-  const rawName = descriptor.name ?? autoName;
-  if (!rawName)
-    throw new Error('$defineStore: must provide name in descriptor or pass autoName argument');
-
+function registerModule(rawName: string, descriptor: StoreModuleDef) {
   const modRealName = camelize(rawName);
 
   // 初始化state，支持state为函数
@@ -85,21 +75,37 @@ nx.$defineStore = function (descriptor: StoreModuleDef, autoName?: string) {
       });
     }
   }
+}
 
+/**
+ * nx.$defineStore
+ * 接收单一对象参数 descriptor：
+ * - 传了 name: nx.$defineStore({ name: 'counter', state: ... }) -> 立即以该 name 注册模块
+ * - 未传 name: nx.$defineStore({ state: ... }) -> name 可选，返回描述符由 $registerStores 统一注册
+ * 同时向后兼容第二个 autoName 参数（例如测试或特定手动注册调用）
+ */
+nx.$defineStore = function (descriptor: StoreModuleDef, autoName?: string) {
+  const finalName = descriptor.name ?? autoName;
+  if (finalName) {
+    registerModule(finalName, descriptor);
+  }
   return descriptor;
 };
 
 /**
  * nx.$registerStores
  * @param modules import.meta.glob 导入的模块集合（形如 { './modules/theme.ts': descriptor }）
- * 自动提取文件名作为 autoName 传给 $defineStore（优先使用 descriptor.name）
+ * 支持单层或多层目录嵌套，自动生成命名（优先使用 descriptor.name）并完成注册
  */
-nx.$registerStores = function (modules: Record<string, StoreModuleDef>) {
+nx.$registerStores = function (modules: Record<string, any>) {
   const result: Record<string, StoreModuleDef> = {};
   for (const path in modules) {
-    const rawName = path.split('/').pop()?.replace(/\.[^.]+$/, '');
-    if (rawName && modules[path]) {
-      result[rawName] = nx.$defineStore(modules[path], rawName);
+    const rawName = resolveModuleNameFromPath(path);
+    const descriptor = modules[path]?.default ?? modules[path];
+    if (rawName && descriptor) {
+      const finalName = descriptor.name ?? rawName;
+      registerModule(finalName, descriptor);
+      result[finalName] = descriptor;
     }
   }
   return result;

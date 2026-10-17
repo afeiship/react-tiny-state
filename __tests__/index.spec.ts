@@ -1,6 +1,6 @@
 import '@jswork/next';
 import fn from '../src';
-import { camelize } from '../src/utils';
+import { camelize, resolveModuleNameFromPath } from '../src/utils';
 
 describe('api.basic', () => {
   beforeEach(() => fn.$resetStore());
@@ -20,16 +20,48 @@ describe('api.basic', () => {
 describe('api.$registerStores', () => {
   beforeEach(() => fn.$resetStore());
 
-  test('registers multiple modules parsed from glob paths', () => {
+  test('registers multiple modules parsed from glob paths with arbitrary root folder', () => {
     const modules = {
-      './modules/theme.ts': { state: { primary: 'blue' } },
-      './modules/user-profile.ts': { state: { name: 'aric' } },
+      './m2/theme.ts': { state: { primary: 'blue' } },
+      './any-folder/user-profile.ts': { state: { name: 'aric' } },
+      '/src/stores/m2/counter.ts': { state: { count: 1 } },
     };
     const res = fn.$registerStores(modules);
 
-    expect(Object.keys(res)).toEqual(['theme', 'user-profile']);
+    expect(Object.keys(res)).toEqual(['theme', 'user-profile', 'counter']);
     expect(fn.$get('theme.primary')).toBe('blue');
     expect(fn.$get('userProfile.name')).toBe('aric');
+    expect(fn.$get('counter.count')).toBe(1);
+  });
+
+  test('registers nested directory modules and camelizes path (e.g. member/profile.ts -> memberProfile)', () => {
+    const modules = {
+      './modules/member/profile.ts': { state: { nickname: 'tom' } },
+      './modules/member/orders.ts': { state: { total: 5 } },
+      './modules/member/account/security.ts': { state: { twoFactor: true } },
+    };
+    const res = fn.$registerStores(modules);
+
+    expect(Object.keys(res)).toEqual(['member-profile', 'member-orders', 'member-account-security']);
+    expect(fn.$get('memberProfile.nickname')).toBe('tom');
+    expect(fn.$get('memberOrders.total')).toBe(5);
+    expect(fn.$get('memberAccountSecurity.twoFactor')).toBe(true);
+  });
+
+  test('strips /index from nested directory modules (e.g. member/index.ts -> member)', () => {
+    const modules = {
+      './modules/member/index.ts': { state: { level: 1 } },
+    };
+    fn.$registerStores(modules);
+    expect(fn.$get('member.level')).toBe(1);
+  });
+
+  test('supports raw module objects with default export', () => {
+    const modules = {
+      './modules/cart.ts': { default: { state: { count: 3 } } },
+    };
+    fn.$registerStores(modules);
+    expect(fn.$get('cart.count')).toBe(3);
   });
 
   test('respects descriptor.name override', () => {
@@ -45,23 +77,21 @@ describe('api.$registerStores', () => {
 describe('api.$defineStore', () => {
   beforeEach(() => fn.$resetStore());
 
-  test('uses autoName and camelizes it', () => {
-    fn.$defineStore({ state: { count: 0 } }, 'user-info');
-    expect(fn.$get('userInfo.count')).toBe(0);
+  test('registers store immediately when name is provided in descriptor', () => {
+    fn.$defineStore({ name: 'counter', state: { count: 10 } });
+    expect(fn.$get('counter.count')).toBe(10);
   });
 
-  test('descriptor.name has higher priority than autoName', () => {
-    fn.$defineStore({ name: 'theme', state: { primary: 'green' } }, 'other');
-    expect(fn.$get('theme.primary')).toBe('green');
-    expect(fn.$get('other')).toBeUndefined();
-  });
-
-  test('throws without name', () => {
-    expect(() => fn.$defineStore({ state: {} })).toThrow();
+  test('name is optional; returns descriptor when name is omitted', () => {
+    const desc = { state: { count: 0 } };
+    const res = fn.$defineStore(desc);
+    expect(res).toBe(desc);
+    // Not registered yet until $registerStores assigns a name
+    expect(fn.$get()).toEqual({});
   });
 
   test('supports function state', () => {
-    fn.$defineStore({ state: () => ({ items: [1, 2] }) }, 'cart');
+    fn.$defineStore({ name: 'cart', state: () => ({ items: [1, 2] }) });
     expect(fn.$get('cart.items')).toEqual([1, 2]);
   });
 });
@@ -224,6 +254,25 @@ describe('api.$resetStore', () => {
     fn.$defineStore({ state: { primary: 'green' } }, 'theme');
     fn.$set('theme.primary', 'red');
     expect(cb).not.toHaveBeenCalled();
+  });
+});
+
+describe('utils.resolveModuleNameFromPath', () => {
+  test('resolves single level filename under arbitrary root directory', () => {
+    expect(resolveModuleNameFromPath('./modules/counter.ts')).toBe('counter');
+    expect(resolveModuleNameFromPath('./m2/counter.ts')).toBe('counter');
+    expect(resolveModuleNameFromPath('/src/stores/modules/counter.ts')).toBe('counter');
+  });
+
+  test('resolves nested subdirectories with hyphen delimiter', () => {
+    expect(resolveModuleNameFromPath('./modules/member/profile.ts')).toBe('member-profile');
+    expect(resolveModuleNameFromPath('./m2/member/orders.ts')).toBe('member-orders');
+    expect(resolveModuleNameFromPath('./m2/member/account/security.ts')).toBe('member-account-security');
+  });
+
+  test('strips trailing /index', () => {
+    expect(resolveModuleNameFromPath('./modules/member/index.ts')).toBe('member');
+    expect(resolveModuleNameFromPath('./m2/member/index.ts')).toBe('member');
   });
 });
 

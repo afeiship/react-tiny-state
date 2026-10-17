@@ -11,6 +11,7 @@
 - Modular stores: `state` / `getters` / `actions` / `watch` per module.
 - Nested path read/write via `nx.$get` / `nx.$set` (e.g. `user.profile.login`).
 - Global `nx.$get / $set / $call` outside components, plus `nx.$use` hook inside components.
+- Zero extra dependencies beyond `@jswork/next` (utils are inlined in `src/utils.ts`).
 
 ## installation
 ```shell
@@ -24,11 +25,8 @@ npm install @jswork/react-tiny-state
 ```ts
 // stores/modules/theme.ts
 import '@jswork/next';
-import '@jswork/next-slice2str';
-import '@jswork/next-camelize';
-import '@jswork/next-invoke';
 
-export default nx.$defineStore('theme', {
+export default nx.$defineStore({
   state: {
     primary: 'green',
     child: { n1: { a: 123 } },
@@ -46,7 +44,9 @@ export default nx.$defineStore('theme', {
 
 ```ts
 // stores/modules/user.ts
-export default nx.$defineStore('user', {
+import '@jswork/next';
+
+export default nx.$defineStore({
   state: {
     profile: null,
     session: null,
@@ -80,6 +80,7 @@ export default { theme, user };
 ### 3. wrap your app
 
 ```tsx
+import '@jswork/next';
 import StateProvider from '@jswork/react-tiny-state';
 import stores from './stores';
 
@@ -115,10 +116,10 @@ nx.$call('user.profile', { username: 'afeiship' });
 ```
 Props: `store` (composed store modules), `children`. Merges every module's `state` into the root state and provides it through Context.
 
-### nx.$defineStore(name, descriptor)
+### nx.$defineStore(descriptor)
 ```ts
-nx.$defineStore('theme', {
-  state: {...},                 // module state
+nx.$defineStore({
+  state: {...},                 // module state (function state supported)
   getters: {...},               // computed values, `this` = module state
   actions: {...},               // methods, `this` = module state
   watch: {...},                 // path -> (newValue, oldValue), fired by nx.$set

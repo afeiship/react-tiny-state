@@ -21,3 +21,4 @@ interface NxStatic {
   $use(inPath: string, inDefault?: any): any;
   $resetStore(): void;
 }
+

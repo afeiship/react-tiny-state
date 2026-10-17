@@ -89,7 +89,25 @@ nx.$defineStore = function (descriptor: StoreModuleDef, autoName?: string) {
   return descriptor;
 };
 
-nx.$get = function (path: string, defaultValue?: any) {
+/**
+ * nx.$registerStores
+ * @param modules import.meta.glob 导入的模块集合（形如 { './modules/theme.ts': descriptor }）
+ * 自动提取文件名作为 autoName 传给 $defineStore（优先使用 descriptor.name）
+ */
+nx.$registerStores = function (modules: Record<string, StoreModuleDef>) {
+  const result: Record<string, StoreModuleDef> = {};
+  for (const path in modules) {
+    const rawName = path.split('/').pop()?.replace(/\.[^.]+$/, '');
+    if (rawName && modules[path]) {
+      result[rawName] = nx.$defineStore(modules[path], rawName);
+    }
+  }
+  return result;
+};
+
+nx.$get = function (path?: string, defaultValue?: any) {
+  // 不传 path 返回整个 store
+  if (!path) return globalState;
   const segments = path.split('.');
   // 路径第二段命中 getter 时调用它（如 'user.isLogin' 返回计算值）
   if (segments.length >= 2) {

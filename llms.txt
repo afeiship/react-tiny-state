@@ -6,7 +6,7 @@ The library attaches a global API onto `nx` (from `@jswork/next`): `nx.$defineSt
 
 ## Documentation
 
-- [README.md](README.md): Full getting-started guide covering store modules, composing stores, wrapping the app, and the complete API reference (`StateProvider`, `$defineStore`, `$get`, `$set`, `$call`, `$use`)
+- [README.md](README.md): Full getting-started guide covering store modules, composing stores, wrapping the app, and the complete API reference (`StateProvider`, `$defineStore`, `$registerStores`, `$get`, `$set`, `$call`, `$use`)
 
 ## Source
 

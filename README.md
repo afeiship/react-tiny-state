@@ -68,14 +68,18 @@ export default nx.$defineStore({
 ### 2. compose stores
 
 ```ts
-// stores/index.ts
-import theme from './modules/theme';
-import user from './modules/user';
+// stores/index.ts (Vite glob auto registration)
+import nx from '@jswork/next';
+import '@jswork/react-tiny-state';
 
-export default { theme, user };
+export const stores = nx.$registerStores(
+  import.meta.glob('./modules/*.ts', { eager: true, import: 'default' })
+);
+
+export default stores;
 ```
 
-> Each module key is camelized (`camelize`) when merged into the root state, so `theme` / `user` above are accessed via `nx.$get('theme')` / `nx.$get('user.*')`.
+> You can also manually call `nx.$defineStore(descriptor, autoName)` per module. Each module key is camelized (`camelize`) when merged into the root state, so `theme` / `user` are accessed via `nx.$get('theme.*')` / `nx.$get('user.*')`.
 
 ### 3. wrap your app
 
@@ -116,15 +120,24 @@ nx.$call('user.profile', { username: 'afeiship' });
 ```
 Props: `store` (composed store modules), `children`. Merges every module's `state` into the root state and provides it through Context.
 
-### nx.$defineStore(descriptor)
+### nx.$defineStore(descriptor, autoName?)
 ```ts
 nx.$defineStore({
+  name: 'theme',                // optional: module name (higher priority than autoName)
   state: {...},                 // module state (function state supported)
   getters: {...},               // computed values, `this` = module state
   actions: {...},               // methods, `this` = module state
   watch: {...},                 // path -> (newValue, oldValue), fired by nx.$set
-});
+}, 'autoName');
 ```
+
+### nx.$registerStores(modules)
+Batch register modules imported via Vite's `import.meta.glob`:
+```ts
+nx.$registerStores(import.meta.glob('./modules/*.ts', { eager: true, import: 'default' }));
+```
+Automatically infers module name from file basename (e.g. `user-info.ts` -> `userInfo`).
+
 State fields are proxied so assignment like `this.profile = res` works internally; getters are exposed as getter properties on the module state (read them via `nx.$get('user.isLogin')`).
 
 ### nx.$get(path, default?)

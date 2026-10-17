@@ -11,9 +11,34 @@ describe('api.basic', () => {
   });
 
   test('exposes all global apis', () => {
-    ['$defineStore', '$get', '$set', '$call', '$use', '$resetStore'].forEach((key) => {
+    ['$defineStore', '$registerStores', '$get', '$set', '$call', '$use', '$resetStore'].forEach((key) => {
       expect(typeof fn[key]).toBe('function');
     });
+  });
+});
+
+describe('api.$registerStores', () => {
+  beforeEach(() => fn.$resetStore());
+
+  test('registers multiple modules parsed from glob paths', () => {
+    const modules = {
+      './modules/theme.ts': { state: { primary: 'blue' } },
+      './modules/user-profile.ts': { state: { name: 'aric' } },
+    };
+    const res = fn.$registerStores(modules);
+
+    expect(Object.keys(res)).toEqual(['theme', 'user-profile']);
+    expect(fn.$get('theme.primary')).toBe('blue');
+    expect(fn.$get('userProfile.name')).toBe('aric');
+  });
+
+  test('respects descriptor.name override', () => {
+    const modules = {
+      './modules/ignored-filename.ts': { name: 'customModule', state: { val: 42 } },
+    };
+    fn.$registerStores(modules);
+    expect(fn.$get('customModule.val')).toBe(42);
+    expect(fn.$get('ignoredFilename')).toBeUndefined();
   });
 });
 
@@ -55,6 +80,15 @@ describe('api.$get/$set', () => {
   test('reads nested path', () => {
     expect(fn.$get('theme.primary')).toBe('green');
     expect(fn.$get('theme.child.n1.a')).toBe(123);
+  });
+
+  test('returns entire store when path is omitted or empty', () => {
+    expect(fn.$get()).toEqual({
+      theme: { primary: 'green', child: { n1: { a: 123 } } },
+    });
+    expect(fn.$get('')).toEqual({
+      theme: { primary: 'green', child: { n1: { a: 123 } } },
+    });
   });
 
   test('returns default value on missing path', () => {

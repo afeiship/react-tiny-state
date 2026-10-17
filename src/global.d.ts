@@ -14,7 +14,8 @@ type StoreDescriptor = {
 
 interface NxStatic {
   $defineStore(inDescriptor: StoreDescriptor, autoName?: string): StoreDescriptor;
-  $get(inPath: string, inDefault?: any): any;
+  $registerStores(inModules: Record<string, any>): Record<string, StoreDescriptor>;
+  $get(inPath?: string, inDefault?: any): any;
   $set(inPath: string, inValue: any): void;
   $call(inPath: string, ...inArgs: any[]): any;
   $use(inPath: string, inDefault?: any): any;

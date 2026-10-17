@@ -4,13 +4,9 @@
 // https://react.dev/reference/react/useReducer
 // https://github.com/aric-tpls/react-tiny-state
 
-import React, { createContext, useReducer, useState, useEffect, useContext } from 'react';
+import React, { createContext, useReducer, useContext } from 'react';
 import nx from '@jswork/next';
-
-// packages
-import '@jswork/next-slice2str';
-import '@jswork/next-camelize';
-import '@jswork/next-invoke';
+import { camelize, slice2str, invoke } from './utils';
 
 declare var wx: any;
 
@@ -34,7 +30,7 @@ const reducer = (inState, inAction) => {
 const getInitialState = (inMainStore) => {
   const state = {};
   nx.forIn(inMainStore, (key, value) => {
-    const storeKey = nx.camelize(value.name || key);
+    const storeKey = camelize(value.name || key);
     const storeState = nx.get(value, 'state');
     state[storeKey] = storeState;
   });
@@ -101,7 +97,7 @@ const StateProvider = ({ store, children }: StateProviderProps) => {
 
   nx.$set = function (inKey, inValue) {
     const state = value[0];
-    const [module, path] = nx.slice2str(inKey, '.')!;
+    const [module, path] = slice2str(inKey, '.')!;
     const oldValue = nx.get(state, inKey);
     const newState = nx.set(state, inKey, inValue);
     const dispatch = value[1] as any;
@@ -121,7 +117,7 @@ const StateProvider = ({ store, children }: StateProviderProps) => {
     const path = `${module}.actions.${method}`;
     const fn = nx.get(store, path);
     const ctx = store[module].state;
-    return nx.invoke(ctx, fn, args);
+    return invoke(ctx, fn, args);
   };
 
   return React.createElement(StateContext.Provider, { value }, children);

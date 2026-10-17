@@ -55,11 +55,7 @@
       "@babel/preset-typescript"
     ]
   },
-  "dependencies": {
-    "@jswork/next-camelize": "^1.0.3",
-    "@jswork/next-invoke": "^1.0.1",
-    "@jswork/next-slice2str": "^1.0.6"
-  },
+  "dependencies": {},
   "keywords": [
     "react",
     "context",

@@ -1,18 +1,21 @@
 import { useSyncExternalStore } from 'react';
 import deepEqual from 'fast-deep-equal';
 import { camelize, resolveModuleNameFromPath } from './utils';
+import type { StoreModuleDef } from './types';
 
 import '@jswork/next';
 
-// 单个store模块描述（每个文件导出一个，传给 $defineStore）
-export type StoreModuleDef<S = any, G = any, A = any> = {
-  /** 用户手动指定模块名，优先级最高 */
-  name?: string;
-  state: S | (() => S);
-  getters?: G;
-  actions?: A;
-  watch?: Record<string, (newVal: any, oldVal: any) => void>;
-};
+declare global {
+  interface NxStatic {
+    $defineStore(inDescriptor: StoreModuleDef, inAutoName?: string): StoreModuleDef;
+    $registerStores(inModules: Record<string, any>): Record<string, StoreModuleDef>;
+    $get(inPath?: string, inDefault?: any): any;
+    $set(inPath: string, inValue: any): void;
+    $call(inPath: string, ...inArgs: any[]): any;
+    $use(inPath: string, inDefault?: any): any;
+    $resetStore(): void;
+  }
+}
 
 type Listener = () => void;
 
@@ -125,8 +128,6 @@ nx.$get = function (path?: string, defaultValue?: any) {
 };
 
 nx.$set = function (path: string, value: any) {
-  // nx.set 原地修改 globalState，先取变更前的值再写入
-  const oldVal = nx.get(globalState, path);
   const oldWatchVals = moduleRegistry.watchEntries.map((entry) => nx.get(globalState, entry.path));
 
   nx.set(globalState, path, value);
@@ -166,3 +167,4 @@ nx.$resetStore = function () {
 };
 
 export default nx;
+export type { StoreModuleDef, Watcher, ActionFn, GetterFn } from './types';

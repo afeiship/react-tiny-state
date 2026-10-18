@@ -162,16 +162,16 @@ Call an action: `nx.$call('user.profile', { username: 'afeiship' })`. Inside the
 React hook version of `$get`, usable inside components: `const count = nx.$use('theme.primary');`.
 
 ## license
-Code released under [the MIT license](https://github.com/afeiship/react-tiny-state/blob/master/LICENSE.txt).
+Code released under [the MIT license](https://github.com/afeiship/react-tiny-state/blob/main/LICENSE.txt).
 
 [version-image]: https://img.shields.io/npm/v/@jswork/react-tiny-state
 [version-url]: https://npmjs.org/package/@jswork/react-tiny-state
 
 [license-image]: https://img.shields.io/npm/l/@jswork/react-tiny-state
-[license-url]: https://github.com/afeiship/react-tiny-state/blob/master/LICENSE.txt
+[license-url]: https://github.com/afeiship/react-tiny-state/blob/main/LICENSE.txt
 
 [size-image]: https://img.shields.io/bundlephobia/minzip/@jswork/react-tiny-state
-[size-url]: https://github.com/afeiship/react-tiny-state/blob/master/dist/react-tiny-state.min.js
+[size-url]: https://github.com/afeiship/react-tiny-state/blob/main/dist/react-tiny-state.min.js
 
 [download-image]: https://img.shields.io/npm/dm/@jswork/react-tiny-state
 [download-url]: https://www.npmjs.com/package/@jswork/react-tiny-state

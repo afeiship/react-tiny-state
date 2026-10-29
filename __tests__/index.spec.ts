@@ -1,11 +1,13 @@
 import '@jswork/next';
-import fn from '../src';
+import '../src';
 import { camelize, resolveModuleNameFromPath } from '../src/utils';
+
+const fn = nx;
 
 describe('api.basic', () => {
   beforeEach(() => fn.$resetStore());
 
-  test('default export is the global nx', () => {
+  test('attaches store apis to the global nx', () => {
     expect(typeof fn.$defineStore).toBe('function');
     expect(fn).toBe((globalThis as any).nx);
   });

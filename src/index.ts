@@ -166,5 +166,4 @@ nx.$resetStore = function () {
   notify();
 };
 
-export default nx;
 export type { StoreModuleDef, Watcher, ActionFn, GetterFn } from './types';

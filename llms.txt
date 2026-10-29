@@ -1,27 +1,22 @@
 # react-tiny-state
 
-> A super simple React state management library (npm: `@jswork/react-tiny-state`) built on `React.createContext` + `useReducer` (~10 lines of core logic). It provides modular stores with `state` / `getters` / `actions` / `watch`, nested-path read/write (`nx.$get` / `nx.$set`), and global methods (`nx.$call`, `nx.$use`), with no dependencies beyond `@jswork/next`.
+> A super simple React state management library (npm: `@jswork/react-tiny-state`) built on a global singleton store + `useSyncExternalStore` — no `Provider`, no `Context`. It provides modular stores with `state` / `getters` / `actions` / `watch`, nested-path read/write (`nx.$get` / `nx.$set`), and global methods (`nx.$call`, `nx.$use`). Its only runtime dependency is `fast-deep-equal`.
 
-The library attaches a global API onto `nx` (from `@jswork/next`): `nx.$defineStore` declares a store module (state fields are proxied, getters are exposed as read-only properties), and `nx.$get` / `nx.$set` / `nx.$call` / `nx.$use` read, write, invoke actions, and consume state — both outside components and via the `nx.$use` hook inside them. The default export, `StateProvider`, merges every module's state into one root state (module keys are camelized) and provides it through a React context so updates re-render consumers and fire matching watchers.
+The package has no default export. Importing it is a side effect that attaches the `$`-prefixed APIs onto the global `nx` (from `@jswork/next`): `nx.$defineStore` declares a store module and `nx.$registerStores` batch-registers modules composed via Vite's `import.meta.glob` (module keys are camelized, e.g. `member/profile.ts` -> `memberProfile`). `nx.$get` / `nx.$set` / `nx.$call` / `nx.$use` read, write (firing matching `watch` watchers), invoke actions, and consume state inside components; `nx.$resetStore` clears everything.
 
 ## Documentation
 
-- [README.md](README.md): Full getting-started guide covering store modules, composing stores, wrapping the app, and the complete API reference (`StateProvider`, `$defineStore`, `$registerStores`, `$get`, `$set`, `$call`, `$use`)
+- [README.md](README.md): Full getting-started guide covering store modules, composing stores, loading stores in the app entry, and the complete API reference (`$defineStore`, `$registerStores`, `$get`, `$set`, `$call`, `$use`)
 
 ## Source
 
-- [src/index.ts](src/index.ts): Core implementation — `$defineStore` (state proxying + getters), the `useReducer`-based `StateProvider`, and the `nx.$get` / `$set` / `$call` / `$use` global API
-- [src/global.d.ts](src/global.d.ts): Type declarations for `StoreDescriptor`, `StateProviderProps`, and the `NxStatic` interface
-- [src/utils.ts](src/utils.ts): Inlined utility functions (`camelize`, `slice2str`, `invoke`) that replaced the `@jswork/next-camelize` / `next-slice2str` / `next-invoke` packages
+- [src/index.ts](src/index.ts): Core implementation — attaches `$defineStore` / `$registerStores` / `$get` / `$set` / `$call` / `$use` / `$resetStore` onto the global `nx`, backed by a module-level singleton store + `useSyncExternalStore`
+- [src/types.ts](src/types.ts): Type declarations for `StoreModuleDef`, `Watcher`, `ActionFn`, and `GetterFn`
+- [src/utils.ts](src/utils.ts): Inlined utility functions (`camelize`, `resolveModuleNameFromPath`) used for module naming from file paths
 
 ## Examples
 
-- [Store module example (theme)](docs/src/shared/stores/modules/theme.ts): Shows `nx.$defineStore` with `state` and `watch` (including nested-path watchers like `child.n1`)
-- [Store module example (user)](docs/src/shared/stores/modules/user.ts): Shows `nx.$defineStore` with `getters`, async `actions`, and `watch`
-- [Stores composition](docs/src/shared/stores/index.ts): Globs and composes store modules via `import.meta.glob`
-- [App wrapper usage](docs/src/App.tsx): Minimal React app wrapped with `StateProvider`
-- [Component consumption](docs/src/comp1.tsx): Reads state inside a component with `nx.$get`
-- [Tests](__tests__/index.spec.ts): Unit tests for the exported provider and the `camelize` / `slice2str` / `invoke` utils
+- [Tests](__tests__/index.spec.ts): Unit tests for the side-effect global API (`$defineStore`, `$registerStores`, `$get` / `$set` / `$call`, watchers, getters) and the `camelize` / `resolveModuleNameFromPath` utils
 
 ## Optional
 
@@ -30,4 +25,4 @@ The library attaches a global API onto `nx` (from `@jswork/next`): `nx.$defineSt
 - [tsconfig.json](tsconfig.json): TypeScript configuration for `src`
 - [jest.config.js](jest.config.js): Test runner configuration
 - [docs/vite.config.ts](docs/vite.config.ts): Vite config for the docs playground app
-- [LICENSE.txt](LICENSE.txt): MIT license
+- [LICENSE.txt](LICENSE.txt): MIT

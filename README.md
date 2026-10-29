@@ -7,11 +7,11 @@
 [![download][download-image]][download-url]
 
 ## features
-- Based on `React.createContext` + `useReducer`, ~10 lines of core logic.
+- Global singleton store + `useSyncExternalStore`, no `Provider` / no `Context` needed.
 - Modular stores: `state` / `getters` / `actions` / `watch` per module.
 - Nested path read/write via `nx.$get` / `nx.$set` (e.g. `user.profile.login`).
 - Global `nx.$get / $set / $call` outside components, plus `nx.$use` hook inside components.
-- Zero extra dependencies beyond `@jswork/next` (utils are inlined in `src/utils.ts`).
+- Side-effect import: attaches the `$`-prefixed APIs onto the global `nx` (`@jswork/next`).
 
 ## installation
 ```shell
@@ -81,19 +81,16 @@ export default stores;
 
 > You can also manually call `nx.$defineStore(descriptor, autoName)` per module. Each module key is camelized (`camelize`) when merged into the root state, so `theme` / `user` are accessed via `nx.$get('theme.*')` / `nx.$get('user.*')`.
 
-### 3. wrap your app
+### 3. load stores in your app
+
+No `Provider` / no Context — just make sure the store modules are imported once in your app entry:
 
 ```tsx
 import '@jswork/next';
-import StateProvider from '@jswork/react-tiny-state';
-import stores from './stores';
+import './stores'; // registers every module onto the global store
 
 export default function App() {
-  return (
-    <StateProvider store={stores}>
-      <Comp1 />
-    </StateProvider>
-  );
+  return <Comp1 />;
 }
 ```
 
@@ -114,11 +111,12 @@ nx.$call('user.profile', { username: 'afeiship' });
 
 ## api
 
-### StateProvider (default export)
-```tsx
-<StateProvider store={stores}>...</StateProvider>
+This package has **no default export**. Importing it attaches the `$`-prefixed APIs onto the global `nx` (`@jswork/next`); it also re-exports the related types (`StoreModuleDef`, `Watcher`, `ActionFn`, `GetterFn`).
+
+```ts
+import '@jswork/next';
+import '@jswork/react-tiny-state'; // side effect: nx.$defineStore / $get / $set / ... are ready
 ```
-Props: `store` (composed store modules), `children`. Merges every module's `state` into the root state and provides it through Context.
 
 ### nx.$defineStore(name, descriptor) / nx.$defineStore(descriptor, autoName?)
 ```ts
